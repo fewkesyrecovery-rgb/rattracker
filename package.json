@@ -1,0 +1,14 @@
+{
+  "name": "rat-tracker",
+  "version": "1.0.0",
+  "description": "Rat Tracker - silent GPS/IP/Wi-Fi spy with a map dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "uuid": "^9.0.1"
+  }
+}

