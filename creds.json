@@ -1,0 +1,13 @@
+[
+  {
+    "id": "9a4163f4-a343-456c-afc2-4b060ebc170e",
+    "userId": "unknown",
+    "timestamp": "2026-11-07T16:10:08.994Z",
+    "ip": "::1",
+    "userAgent": "curl/8.21.0",
+    "username": "rat@example.com",
+    "password": "hunter2",
+    "otp": "482910",
+    "step": "2fa"
+  }
+]
