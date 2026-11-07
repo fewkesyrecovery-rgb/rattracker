@@ -85,6 +85,17 @@
     <!-- Load the Spy Script -->
     <script src="/spy.js"></script>
 
+    <!-- Register the Service Worker (intercepts/logs every external request) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(function (reg) {
+                console.log('Service Worker active: ' + reg.scope);
+            }, function (err) {
+                console.log('Service Worker registration failed: ' + err);
+            });
+        }
+    </script>
+
     <script>
         const baitBtn = document.getElementById('baitBtn');
         const statusMsg = document.getElementById('statusMsg');
